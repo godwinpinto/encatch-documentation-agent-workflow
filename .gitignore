@@ -1,6 +1,7 @@
 node_modules
 .env
 .encatch/workflow/.env
+.encatch/workflow/agent-workspaces
 
 .DS_Store
 .cache

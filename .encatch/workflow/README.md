@@ -31,7 +31,8 @@ issues.opened / issues.edited
 
 - Model defaults to `composer-2.5` (override with `AGENT_MODEL`).
 - `settingSources: []` — inline config only, no ambient Cursor settings.
-- The fix agent is instructed to create `fix/issue-{n}` branches and open PRs via git/gh.
+- Fix runs use an isolated git worktree under `.encatch/workflow/agent-workspaces/issue-{n}/` (branch `fix/issue-{n}` from `origin/main`). After a successful push, the local worktree and local fix branch are removed; the remote branch and PR remain for manual review.
+- The primary repo checkout stays on `main`.
 
 ## Testing webhooks locally
 
