@@ -1,0 +1,58 @@
+---
+title: Agentic Workflow
+description: Local Cursor agent that triages GitHub issues and opens doc fix PRs.
+icon: Bot
+---
+
+The agentic workflow lives in `.encatch/workflow/` — Encatch platform tooling, separate from the docs site but operating on the same repository.
+
+## Architecture
+
+```
+GitHub issue opened/updated
+        ↓
+.encatch/workflow/ webhook server
+        ↓
+triage (rules + Cursor Agent)
+        ↓
+   ┌────┴────┐
+needs info   qualified fix
+   ↓              ↓
+comment      local agent → branch → PR
+```
+
+## Environment
+
+Copy `.encatch/workflow/.env.example` to `.encatch/workflow/.env` and set:
+
+| Variable | Purpose |
+| --- | --- |
+| `CURSOR_API_KEY` | Cursor API key for the local agent |
+| `GITHUB_TOKEN` | GitHub PAT or app token for comments/labels |
+| `GITHUB_WEBHOOK_SECRET` | Validates incoming webhooks |
+| `PORT` | Webhook server port (default `8787`) |
+
+## Run the workflow service
+
+```bash
+pnpm workflow:dev
+```
+
+For local webhook testing, expose the server with a tunnel (e.g. ngrok) and point your GitHub webhook at `POST /webhooks/github`.
+
+## Issue labels
+
+The workflow uses these labels to track state:
+
+- `agent:needs-info` — waiting on reporter
+- `agent:qualified` — ready for the fix agent
+- `agent:in-progress` — agent is working
+- `agent:pr-opened` — fix PR created
+
+## Local agent only
+
+This project uses **local** Cursor agents (`local: { cwd: repoRoot }`). The agent runs on the machine hosting the workflow service and edits files in this repo directly.
+
+## Future Encatch additions
+
+The `.encatch/` directory is reserved for Encatch-related repo tooling. Feedback bridge config and other services can be added alongside `workflow/` without cluttering the docs app root.

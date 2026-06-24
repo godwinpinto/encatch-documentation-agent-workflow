@@ -1,0 +1,25 @@
+---
+title: Welcome
+description: Encatch agentic workflow sample documentation site.
+icon: Rocket
+---
+
+This is the sample docs site for **encatch-agentic-workflow** — a Fumadocs + TanStack Start app paired with a local Cursor agent that triages GitHub issues and opens fix PRs.
+
+## How it works
+
+1. Someone reports a docs issue on GitHub (or via Encatch feedback in the future).
+2. The `.encatch/workflow/` service receives the webhook event.
+3. A local Cursor agent decides if the issue is qualified or needs more information.
+4. For qualified fixes, the agent creates a branch, edits docs, and opens a pull request.
+
+See [Agentic Workflow](/docs/agentic-workflow) for setup details.
+
+## Quick start
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open [http://localhost:3000/docs](http://localhost:3000/docs).

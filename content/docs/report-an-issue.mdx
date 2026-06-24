@@ -1,0 +1,40 @@
+---
+title: Report an Issue
+description: How to submit a docs correction that the agent can act on.
+icon: MessageSquare
+---
+
+Use this guide when opening a GitHub issue so the agentic workflow can qualify and fix it quickly.
+
+## Good issue template
+
+```markdown
+**Page:** /docs/agentic-workflow
+
+**Current text:**
+> The workflow runs on port 8787 by default.
+
+**Expected text:**
+> The workflow runs on port 8787 by default (configurable via PORT).
+
+**Why:** Clarify that PORT is configurable.
+```
+
+## What gets auto-fixed
+
+- Typos and grammar in docs
+- Wrong code samples
+- Broken or outdated links
+- Missing steps when the fix is unambiguous
+
+## What needs more info
+
+- "This page is wrong" with no URL
+- Subjective rewrites without clear before/after
+- Structural changes that need product decisions
+
+Issues that need more info receive an `agent:needs-info` label and a comment asking for details.
+
+## Future: Encatch feedback
+
+Encatch widgets on this docs site will eventually create GitHub issues automatically. The same workflow will pick them up — no changes to the agent pipeline required.
