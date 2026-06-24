@@ -104,3 +104,34 @@ export async function getBotLogin(): Promise<string | undefined> {
   if (!data) return undefined;
   return `${data.slug}[bot]`;
 }
+
+let botGitIdentityPromise: Promise<{ name: string; email: string }> | undefined;
+
+/** Git author identity for commits created in agent worktrees. */
+export async function getBotGitIdentity(): Promise<{ name: string; email: string }> {
+  if (!config.useGithubApp()) {
+    return {
+      name: config.githubOwner(),
+      email: `${config.githubOwner()}@users.noreply.github.com`,
+    };
+  }
+
+  if (!botGitIdentityPromise) {
+    botGitIdentityPromise = (async () => {
+      const appOctokit = new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: config.githubAppId(),
+          privateKey: readPrivateKey(),
+        },
+      });
+      const { data } = await appOctokit.rest.apps.getAuthenticated();
+      return {
+        name: `${data.slug}[bot]`,
+        email: `${config.githubAppId()}+${data.slug}@users.noreply.github.com`,
+      };
+    })();
+  }
+
+  return botGitIdentityPromise;
+}

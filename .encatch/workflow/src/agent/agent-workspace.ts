@@ -8,7 +8,8 @@ import {
   fixBranchForIssue,
   repoRoot,
 } from '../paths.js';
-import { getGitHubAuthToken } from '../github/auth.js';
+import { config } from '../config.js';
+import { getBotGitIdentity, getGitHubAuthToken } from '../github/auth.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -68,10 +69,29 @@ export async function prepareAgentWorkspace(
   await git(repoRoot, ['worktree', 'add', '-B', branch, cwd, 'origin/main']);
 
   const token = await getGitHubAuthToken();
-  await git(cwd, ['config', 'http.extraHeader', `Authorization: Bearer ${token}`]);
+  const owner = config.githubOwner();
+  const repo = config.githubRepo();
+  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
+  await git(cwd, ['remote', 'set-url', 'origin', remoteUrl]);
+
+  const identity = await getBotGitIdentity();
+  await git(cwd, ['config', 'user.name', identity.name]);
+  await git(cwd, ['config', 'user.email', identity.email]);
 
   console.log(`[workspace] prepared ${cwd} on ${branch}`);
   return { cwd, branch };
+}
+
+/** Push the fix branch using workflow GitHub auth (App or PAT). */
+export async function pushFixBranch(cwd: string, branch: string): Promise<void> {
+  const token = await getGitHubAuthToken();
+  const owner = config.githubOwner();
+  const repo = config.githubRepo();
+  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
+  await git(cwd, ['remote', 'set-url', 'origin', remoteUrl]);
+  await git(cwd, ['rev-parse', 'HEAD']);
+  await git(cwd, ['push', '-u', 'origin', branch]);
+  console.log(`[workspace] pushed ${branch}`);
 }
 
 /** Delete local worktree copy after a successful push (remote branch + PR remain). */

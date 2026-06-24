@@ -59,7 +59,7 @@ issues.opened / issues.edited
 
 - Model defaults to `composer-2.5` (override with `AGENT_MODEL`).
 - `settingSources: []` — inline config only, no ambient Cursor settings.
-- Fix runs use an isolated git worktree under `.encatch/workflow/agent-workspaces/issue-{n}/` (branch `fix/issue-{n}` from `origin/main`). After a successful push, the local worktree and local fix branch are removed; the remote branch and PR remain for manual review.
+- Fix runs use an isolated git worktree under `.encatch/workflow/agent-workspaces/issue-{n}/` (branch `fix/issue-{n}` from `origin/main`). The agent commits locally; the workflow pushes the branch and opens the PR as the GitHub App bot. After a successful push, the local worktree and local fix branch are removed; the remote branch and PR remain for manual review.
 - The primary repo checkout stays on `main`.
 - Triage also applies GitHub **`bug`** or **`feature`** labels (create them under repo Settings → Labels).
 - Complex issues get **`agent:needs-approval`** and ping users listed in `GITHUB_USER_APPROVAL`. An approver comments **approved** / **go ahead** / **lgtm** to start the fix.

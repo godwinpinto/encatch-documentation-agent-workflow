@@ -1,11 +1,12 @@
 import { Agent, CursorAgentError } from '@cursor/sdk';
 import { config } from '../config.js';
-import { getGitHubAuthToken } from '../github/auth.js';
 import type { GitHubIssue } from '../github/issues.js';
 import { formatIssueForAgent } from '../github/issues.js';
+import { openFixPullRequest } from '../github/pull-requests.js';
 import {
   cleanupAgentWorkspaceAfterPush,
   prepareAgentWorkspace,
+  pushFixBranch,
 } from './agent-workspace.js';
 
 const FIX_PROMPT_PREFIX = `You are fixing documentation in a Fumadocs + TanStack Start repo (encatch-agentic-workflow).
@@ -15,7 +16,8 @@ This run uses an isolated git worktree already checked out on branch \`fix/issue
 Tasks:
 1. Make the minimal doc change required by the issue (content/docs/, MDX, links, code samples).
 2. Commit with message: "fix(docs): resolve issue #{number}".
-3. Push the branch and open a pull request that references "Fixes #{number}".
+
+Do not push, open pull requests, or run \`gh\`. The workflow pushes the branch and opens the PR after you finish.
 
 Do not run git checkout or create branches. Only change files required for this issue.
 
@@ -26,6 +28,7 @@ export type FixResult = {
   runId: string;
   status: 'finished' | 'error';
   summary?: string;
+  prUrl?: string;
 };
 
 export async function fixIssue(issue: GitHubIssue): Promise<FixResult> {
@@ -38,50 +41,46 @@ export async function fixIssue(issue: GitHubIssue): Promise<FixResult> {
   try {
     workspace = await prepareAgentWorkspace(issue.number);
 
-    const token = await getGitHubAuthToken();
-    const previousGhToken = process.env.GH_TOKEN;
-    const previousGithubToken = process.env.GITHUB_TOKEN;
-    process.env.GH_TOKEN = token;
-    process.env.GITHUB_TOKEN = token;
+    await using agent = await Agent.create({
+      apiKey: config.cursorApiKey(),
+      model: { id: config.agentModel() },
+      local: { cwd: workspace.cwd, settingSources: [] },
+    });
 
-    try {
-      await using agent = await Agent.create({
-        apiKey: config.cursorApiKey(),
-        model: { id: config.agentModel() },
-        local: { cwd: workspace.cwd, settingSources: [] },
-      });
+    const run = await agent.send(prompt);
+    console.log(`[fix] agent=${agent.agentId} run=${run.id} issue=#${issue.number}`);
 
-      const run = await agent.send(prompt);
-      console.log(`[fix] agent=${agent.agentId} run=${run.id} issue=#${issue.number}`);
-
-      for await (const event of run.stream()) {
-        if (event.type === 'assistant') {
-          for (const block of event.message.content) {
-            if (block.type === 'text') {
-              process.stdout.write(block.text);
-            }
+    for await (const event of run.stream()) {
+      if (event.type === 'assistant') {
+        for (const block of event.message.content) {
+          if (block.type === 'text') {
+            process.stdout.write(block.text);
           }
         }
       }
+    }
 
-      const result = await run.wait();
+    const result = await run.wait();
 
-      if (result.status === 'finished') {
-        await cleanupAgentWorkspaceAfterPush(issue.number);
-        workspace = undefined;
-      }
+    if (result.status === 'finished') {
+      await pushFixBranch(workspace.cwd, workspace.branch);
+      const prUrl = await openFixPullRequest(issue, workspace.branch);
+      await cleanupAgentWorkspaceAfterPush(issue.number);
+      workspace = undefined;
 
       return {
         runId: result.id,
-        status: result.status === 'finished' ? 'finished' : 'error',
-        summary: result.status === 'finished' ? 'Agent completed fix run' : 'Agent run failed',
+        status: 'finished',
+        summary: 'Agent completed fix run',
+        prUrl,
       };
-    } finally {
-      if (previousGhToken === undefined) delete process.env.GH_TOKEN;
-      else process.env.GH_TOKEN = previousGhToken;
-      if (previousGithubToken === undefined) delete process.env.GITHUB_TOKEN;
-      else process.env.GITHUB_TOKEN = previousGithubToken;
     }
+
+    return {
+      runId: result.id,
+      status: 'error',
+      summary: 'Agent run failed',
+    };
   } catch (err) {
     if (workspace) {
       console.log(

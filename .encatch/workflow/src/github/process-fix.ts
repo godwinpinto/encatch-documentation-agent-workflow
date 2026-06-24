@@ -18,7 +18,9 @@ export async function runFixFlow(issueNumber: number, issue: GitHubIssue): Promi
   await commentOnIssue(
     issueNumber,
     fix.status === 'finished'
-      ? `Agent completed the fix run (\`${fix.runId}\`). Please review the linked pull request.`
+      ? fix.prUrl
+        ? `Agent completed the fix run (\`${fix.runId}\`). Pull request: ${fix.prUrl}`
+        : `Agent completed the fix run (\`${fix.runId}\`). Please review the linked pull request.`
       : `Agent fix run failed (\`${fix.runId}\`). A maintainer will follow up manually.`,
   );
 
