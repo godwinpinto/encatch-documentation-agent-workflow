@@ -1,0 +1,46 @@
+---
+title: Benefits for Docs Sites
+description: How agentic workflows reduce manual effort on small documentation changes.
+icon: Sparkles
+---
+
+Documentation sites accumulate small fixes — typos, outdated code samples, broken links, and missing clarifications. Each change is simple on its own, but routing every one through a human maintainer adds up.
+
+Agentic workflows handle these low-risk edits automatically so your team stays focused on larger content work.
+
+## What changes for docs teams
+
+| Without an agent | With an agentic workflow |
+| --- | --- |
+| Reporter opens an issue and waits | Issue is triaged and qualified automatically |
+| Maintainer context-switches to fix a typo | Agent opens a PR with the doc edit |
+| Small fixes sit in the backlog | Small fixes ship in minutes |
+
+## Typical fixes the agent handles
+
+- **Typos and grammar** — one-line corrections across MDX pages
+- **Code samples** — updating commands, ports, or env vars when the repo changes
+- **Links** — fixing broken internal or external URLs
+- **Clarifications** — adding a sentence when the issue includes clear before/after text
+
+These are the changes that rarely need a design review but still block on someone having time to edit and open a PR.
+
+## How it fits this site
+
+This docs app is a Fumadocs + TanStack Start site. The `.encatch/workflow/` service watches GitHub issues, qualifies doc-only fixes, and runs a local Cursor agent that edits files under `content/docs/` and opens a pull request.
+
+You report the issue; the agent does the mechanical work — branch, edit, commit, PR.
+
+## When to use the agent vs. edit directly
+
+Use the agent when:
+
+- The fix is scoped to documentation (content, links, samples)
+- The expected change is unambiguous (include page URL and before/after text)
+
+Edit directly or discuss first when:
+
+- The change affects product behavior or API contracts
+- You need a structural rewrite or new section that needs editorial judgment
+
+See [Report an Issue](/docs/report-an-issue) for the issue template that helps the agent qualify fixes quickly.
