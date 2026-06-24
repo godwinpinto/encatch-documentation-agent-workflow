@@ -1,5 +1,6 @@
 import { Agent, CursorAgentError } from '@cursor/sdk';
 import { config } from '../config.js';
+import { getGitHubAuthToken } from '../github/auth.js';
 import type { GitHubIssue } from '../github/issues.js';
 import { formatIssueForAgent } from '../github/issues.js';
 import {
@@ -37,37 +38,50 @@ export async function fixIssue(issue: GitHubIssue): Promise<FixResult> {
   try {
     workspace = await prepareAgentWorkspace(issue.number);
 
-    await using agent = await Agent.create({
-      apiKey: config.cursorApiKey(),
-      model: { id: config.agentModel() },
-      local: { cwd: workspace.cwd, settingSources: [] },
-    });
+    const token = await getGitHubAuthToken();
+    const previousGhToken = process.env.GH_TOKEN;
+    const previousGithubToken = process.env.GITHUB_TOKEN;
+    process.env.GH_TOKEN = token;
+    process.env.GITHUB_TOKEN = token;
 
-    const run = await agent.send(prompt);
-    console.log(`[fix] agent=${agent.agentId} run=${run.id} issue=#${issue.number}`);
+    try {
+      await using agent = await Agent.create({
+        apiKey: config.cursorApiKey(),
+        model: { id: config.agentModel() },
+        local: { cwd: workspace.cwd, settingSources: [] },
+      });
 
-    for await (const event of run.stream()) {
-      if (event.type === 'assistant') {
-        for (const block of event.message.content) {
-          if (block.type === 'text') {
-            process.stdout.write(block.text);
+      const run = await agent.send(prompt);
+      console.log(`[fix] agent=${agent.agentId} run=${run.id} issue=#${issue.number}`);
+
+      for await (const event of run.stream()) {
+        if (event.type === 'assistant') {
+          for (const block of event.message.content) {
+            if (block.type === 'text') {
+              process.stdout.write(block.text);
+            }
           }
         }
       }
+
+      const result = await run.wait();
+
+      if (result.status === 'finished') {
+        await cleanupAgentWorkspaceAfterPush(issue.number);
+        workspace = undefined;
+      }
+
+      return {
+        runId: result.id,
+        status: result.status === 'finished' ? 'finished' : 'error',
+        summary: result.status === 'finished' ? 'Agent completed fix run' : 'Agent run failed',
+      };
+    } finally {
+      if (previousGhToken === undefined) delete process.env.GH_TOKEN;
+      else process.env.GH_TOKEN = previousGhToken;
+      if (previousGithubToken === undefined) delete process.env.GITHUB_TOKEN;
+      else process.env.GITHUB_TOKEN = previousGithubToken;
     }
-
-    const result = await run.wait();
-
-    if (result.status === 'finished') {
-      await cleanupAgentWorkspaceAfterPush(issue.number);
-      workspace = undefined;
-    }
-
-    return {
-      runId: result.id,
-      status: result.status === 'finished' ? 'finished' : 'error',
-      summary: result.status === 'finished' ? 'Agent completed fix run' : 'Agent run failed',
-    };
   } catch (err) {
     if (workspace) {
       console.log(

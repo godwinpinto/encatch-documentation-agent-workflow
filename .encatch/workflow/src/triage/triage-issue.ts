@@ -18,7 +18,7 @@ Reply with JSON only, no markdown fences:
 
 Rules:
 - "qualified" when the issue names a page/section and gives a small, clear fix (typo, wrong code, broken link, single sentence correction).
-- "needs_info" when the report is vague, subjective without examples, or missing page URL/context.
+- "needs_info" when the report is vague, subjective without examples, or missing page URL/context. Check issue comments too — a thread may contain the missing details.
 - "needs_approval" when the issue is understandable but too complex for an automated doc fix (large rewrites, many pages, structural doc changes, unclear scope, or risky edits). Do not auto-fix these.
 - "type" "bug" for corrections to existing docs (typo, grammar, broken link, wrong/outdated text).
 - "type" "feature" for new or expanded documentation (new page, new section, missing topic coverage).
@@ -27,8 +27,11 @@ Rules:
 Issue:
 `;
 
-export async function triageIssue(issue: GitHubIssue): Promise<TriageResult> {
-  const prompt = TRIAGE_PROMPT + formatIssueForAgent(issue);
+export async function triageIssue(
+  issue: GitHubIssue,
+  extraContext = '',
+): Promise<TriageResult> {
+  const prompt = TRIAGE_PROMPT + formatIssueForAgent(issue) + extraContext;
 
   const result = await Agent.prompt(prompt, {
     apiKey: config.cursorApiKey(),
@@ -125,7 +128,7 @@ export function quickQualify(issue: GitHubIssue): TriageResult | null {
       status: 'needs_info',
       reason: 'Issue too short and missing page context',
       comment:
-        'Thanks! Which doc page is affected? Please share the URL or path (e.g. `/docs/agentic-workflow`), what it says now, and what it should say.',
+        'Thanks! Which doc page is affected? Please share the URL or path (e.g. `/docs/agentic-workflow`), what it says now, and what it should say. You can reply in a comment on this issue.',
     };
   }
 

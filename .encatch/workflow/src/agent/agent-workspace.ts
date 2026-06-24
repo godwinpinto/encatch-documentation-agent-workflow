@@ -8,6 +8,7 @@ import {
   fixBranchForIssue,
   repoRoot,
 } from '../paths.js';
+import { getGitHubAuthToken } from '../github/auth.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -65,6 +66,9 @@ export async function prepareAgentWorkspace(
 
   await git(repoRoot, ['fetch', 'origin', 'main']);
   await git(repoRoot, ['worktree', 'add', '-B', branch, cwd, 'origin/main']);
+
+  const token = await getGitHubAuthToken();
+  await git(cwd, ['config', 'http.extraHeader', `Authorization: Bearer ${token}`]);
 
   console.log(`[workspace] prepared ${cwd} on ${branch}`);
   return { cwd, branch };

@@ -11,7 +11,9 @@
     "types:check": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "workflow:dev": "pnpm --filter @encatch/agentic-workflow dev",
-    "workflow:start": "pnpm --filter @encatch/agentic-workflow start"
+    "workflow:start": "pnpm --filter @encatch/agentic-workflow start",
+    "workflow:setup-github-app": "pnpm --filter @encatch/agentic-workflow setup:github-app",
+    "workflow:verify-github-app": "pnpm --filter @encatch/agentic-workflow verify:github-app"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.15",

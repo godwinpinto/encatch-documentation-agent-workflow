@@ -1,18 +1,27 @@
 import type { Context } from 'hono';
 import { Webhooks } from '@octokit/webhooks';
-import { agentLabels, config } from '../config.js';
+import { config } from '../config.js';
 import {
   fetchIssue,
-  addLabels,
-  commentOnIssue,
   isAlreadyProcessed,
-  formatApprovalComment,
+  isWorkflowGeneratedComment,
+  fetchIssueComments,
+  formatIssueCommentsForAgent,
+  type GitHubIssue,
 } from './issues.js';
-import { isApprovalComment, isApproverUser, isAwaitingApproval } from './approval.js';
-import { runFixFlow, startApprovedFix } from './process-fix.js';
-import { triageIssue, quickQualify, labelsForTriage } from '../triage/triage-issue.js';
+import {
+  isApprovalComment,
+  isApproverUser,
+  isAwaitingApproval,
+  isAwaitingInfo,
+} from './approval.js';
+import { startApprovedFix } from './process-fix.js';
+import { handleTriageOutcome } from './process-triage.js';
+import { triageIssue, quickQualify } from '../triage/triage-issue.js';
 
 const webhooks = new Webhooks({ secret: config.githubWebhookSecret() });
+
+const MIN_INFO_COMMENT_LENGTH = 20;
 
 type IssuePayload = {
   action: string;
@@ -66,8 +75,8 @@ export async function handleGitHubWebhook(c: Context): Promise<Response> {
     const commentBody = comment?.body ?? '';
 
     if (issueNumber && login && comment?.user?.type !== 'Bot') {
-      void processApprovalComment(issueNumber, login, userId, commentBody).catch((err) => {
-        console.error(`[webhook] failed approval comment on #${issueNumber}:`, err);
+      void processIssueComment(issueNumber, login, userId, commentBody).catch((err) => {
+        console.error(`[webhook] failed comment on #${issueNumber}:`, err);
       });
     }
   }
@@ -90,33 +99,50 @@ async function processIssue(issueNumber: number): Promise<void> {
   const quick = quickQualify(issue);
   const triage = quick ?? (await triageIssue(issue));
 
-  if (triage.status === 'needs_info') {
-    await addLabels(issueNumber, labelsForTriage(triage, [agentLabels.needsInfo]));
-    await commentOnIssue(issueNumber, triage.comment!);
-    console.log(
-      `[process] #${issueNumber} needs info${triage.typeLabel ? ` (${triage.typeLabel})` : ''}: ${triage.reason}`,
-    );
+  await handleTriageOutcome(issueNumber, issue, triage);
+}
+
+async function processIssueComment(
+  issueNumber: number,
+  login: string,
+  userId: number | undefined,
+  commentBody: string,
+): Promise<void> {
+  if (isWorkflowGeneratedComment(commentBody)) {
+    console.log(`[process] skip comment on #${issueNumber} — workflow-generated comment`);
     return;
   }
 
-  if (triage.status === 'needs_approval') {
-    await addLabels(issueNumber, labelsForTriage(triage, [agentLabels.needsApproval]));
-    await commentOnIssue(issueNumber, await formatApprovalComment(triage.reason));
-    console.log(
-      `[process] #${issueNumber} needs approval${triage.typeLabel ? ` (${triage.typeLabel})` : ''}: ${triage.reason}`,
-    );
+  const issue = await fetchIssue(issueNumber);
+
+  if (isAwaitingApproval(issue)) {
+    await processApprovalComment(issueNumber, login, userId, commentBody);
     return;
   }
 
-  await addLabels(
-    issueNumber,
-    labelsForTriage(triage, [agentLabels.qualified, agentLabels.inProgress]),
-  );
-  console.log(
-    `[process] #${issueNumber} qualified (${triage.typeLabel ?? 'bug'}): ${triage.reason}`,
-  );
+  if (isAwaitingInfo(issue)) {
+    await processInfoComment(issueNumber, issue, commentBody);
+    return;
+  }
 
-  await runFixFlow(issueNumber, issue);
+  console.log(`[process] skip comment on #${issueNumber} — not awaiting info or approval`);
+}
+
+async function processInfoComment(
+  issueNumber: number,
+  issue: GitHubIssue,
+  commentBody: string,
+): Promise<void> {
+  if (commentBody.trim().length < MIN_INFO_COMMENT_LENGTH) {
+    console.log(`[process] skip info comment on #${issueNumber} — too short to re-triage`);
+    return;
+  }
+
+  const comments = await fetchIssueComments(issueNumber);
+  const triage = await triageIssue(issue, formatIssueCommentsForAgent(comments));
+
+  console.log(`[process] #${issueNumber} re-triaged from comment`);
+  await handleTriageOutcome(issueNumber, issue, triage);
 }
 
 async function processApprovalComment(
@@ -125,12 +151,6 @@ async function processApprovalComment(
   userId: number | undefined,
   commentBody: string,
 ): Promise<void> {
-  const issue = await fetchIssue(issueNumber);
-
-  if (!isAwaitingApproval(issue)) {
-    return;
-  }
-
   if (!(await isApproverUser(login, userId))) {
     console.log(`[process] skip approval comment on #${issueNumber} — ${login} is not an approver`);
     return;

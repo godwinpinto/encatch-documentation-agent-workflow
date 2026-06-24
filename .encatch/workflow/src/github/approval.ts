@@ -23,6 +23,15 @@ export function isAwaitingApproval(issue: GitHubIssue): boolean {
   );
 }
 
+export function isAwaitingInfo(issue: GitHubIssue): boolean {
+  return (
+    issue.labels.includes(agentLabels.needsInfo) &&
+    !issue.labels.includes(agentLabels.inProgress) &&
+    !issue.labels.includes(agentLabels.prOpened) &&
+    !issue.labels.includes(agentLabels.needsApproval)
+  );
+}
+
 export async function isApproverUser(login: string, userId?: number): Promise<boolean> {
   const configured = config.githubUserApproval();
   if (configured.length === 0) return false;
