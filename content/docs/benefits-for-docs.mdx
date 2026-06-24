@@ -1,0 +1,60 @@
+---
+title: Benefits for Docs Sites
+description: How agentic workflows reduce effort on small documentation changes for PMs and engineers.
+icon: Sparkles
+---
+
+Documentation sites accumulate small fixes: typos, outdated code samples, broken links, and clarifications. Each item is quick to fix, but someone still has to triage the report, find the right file, open a PR, and wait for review. Agentic workflows automate that loop so teams spend less time on low-risk edits.
+
+## Who this helps
+
+This approach is aimed at **product managers** and **engineers** who:
+
+- Need a docs correction but do not want to wait for a dedicated docs sprint
+- Have higher-priority product work and defer small doc fixes
+- Want contributors (support, CS, partners) to report issues without creating engineering backlog
+
+The agent handles the mechanical work; humans stay in the loop for approval via pull requests.
+
+## What changes get faster
+
+| Change type | Without an agent | With an agentic workflow |
+| --- | --- | --- |
+| Typo or grammar fix | Issue → backlog → engineer finds file → PR | Issue → agent opens PR in minutes |
+| Wrong code sample | Same handoff delay | Agent edits MDX and opens PR |
+| Broken link | Often discovered late | Qualified issues fixed automatically |
+| Unclear steps | Needs clarification | Agent asks for details (`agent:needs-info`) |
+
+Most qualified fixes in this repo are scoped to `content/docs/` — the same files your readers see on the site.
+
+## Reduced human effort
+
+1. **Triage** — The workflow reads the issue, checks labels, and decides if there is enough detail to act.
+2. **Edit** — A local Cursor agent branches, updates MDX, and keeps changes minimal.
+3. **Review** — A PR is opened for a human to approve; nothing merges without maintainer sign-off.
+
+That means PMs can file a GitHub issue with before/after text instead of pinging engineering. Engineers keep ownership of merges without doing every one-line edit themselves.
+
+## Example flow in this repo
+
+```
+Reader or PM opens a docs issue on GitHub
+              ↓
+.encatch/workflow/ qualifies the request
+              ↓
+Local agent edits content/docs/*.mdx
+              ↓
+PR opened → maintainer reviews → merge → site redeploys
+```
+
+See [Agentic Workflow](/docs/agentic-workflow) for setup and [Report an Issue](/docs/report-an-issue) for how to write issues the agent can act on.
+
+## When to use it
+
+Agentic workflows fit documentation sites that:
+
+- Use MDX or markdown in git (Fumadocs, Docusaurus, Nextra, etc.)
+- Receive frequent small corrections
+- Want faster turnaround without giving agents free rein on production
+
+They are not a replacement for technical writing or architecture decisions — structural rewrites and ambiguous feedback still need a human conversation.
