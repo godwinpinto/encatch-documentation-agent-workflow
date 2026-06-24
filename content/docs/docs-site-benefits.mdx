@@ -1,0 +1,39 @@
+---
+title: Benefits for Docs Sites
+description: How agentic workflows reduce manual effort on documentation updates.
+icon: Sparkles
+---
+
+Documentation sites accumulate small fixes — typos, outdated code samples, broken links, and missing steps. Each one is quick to fix, but they still compete with product work for engineering time. An agentic workflow handles those low-risk changes automatically so your team stays focused on higher-priority work.
+
+## Who this helps
+
+**Product managers** spot doc gaps during reviews or customer calls but often cannot ship the fix themselves. They file an issue and wait for engineering bandwidth.
+
+**Engineers** know the fix is trivial but deprioritize it against features, bugs, and infrastructure. The issue sits in the backlog until someone has a spare moment.
+
+An agentic workflow closes that gap: reporters describe the change, the agent qualifies it, and a fix PR appears without pulling someone off their current sprint.
+
+## What you get back
+
+| Without an agent | With an agentic workflow |
+| --- | --- |
+| Small doc issues queue behind product work | Qualified fixes land as PRs within minutes |
+| PMs wait on engineering for one-line changes | Reporters can self-serve via GitHub issues |
+| Engineers context-switch for trivial edits | Engineers review a ready PR instead of writing it |
+| Typos and broken links linger for weeks | Low-risk corrections ship on the same day |
+
+## Typical wins
+
+- **Typos and grammar** — corrected without a human opening the repo.
+- **Outdated code samples** — updated when the before/after is clear in the issue.
+- **Broken links** — fixed when the correct URL is provided.
+- **Missing steps** — added when the gap is unambiguous.
+
+Issues that need product decisions or lack enough detail are flagged for a human (`agent:needs-info`) instead of guessing.
+
+## How it fits your docs stack
+
+This sample site uses Fumadocs + TanStack Start with content in `content/docs/`. The workflow service in `.encatch/workflow/` watches GitHub issues and runs a local Cursor agent against the same repo — no separate CMS or custom pipeline required.
+
+For setup and architecture details, see [Agentic Workflow](/docs/agentic-workflow). To file an issue the agent can act on, see [Report an Issue](/docs/report-an-issue).
