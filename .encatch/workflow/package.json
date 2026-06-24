@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "dev": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs watch src/index.ts",
+    "start": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs src/index.ts",
     "types:check": "tsc --noEmit"
   },
   "dependencies": {
+    "@connectrpc/connect-node": "^1.6.1",
     "@cursor/sdk": "^1.0.20",
     "@octokit/rest": "^22.0.0",
     "@octokit/webhooks": "^14.0.0",
