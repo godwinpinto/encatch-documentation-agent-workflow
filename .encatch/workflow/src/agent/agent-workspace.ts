@@ -41,6 +41,19 @@ async function ensureMainCheckout(): Promise<void> {
   }
 }
 
+/** Required once per repo before `git config --worktree` works with linked worktrees. */
+async function ensureWorktreeConfigEnabled(): Promise<void> {
+  const enabled = await git(repoRoot, [
+    'config',
+    '--get',
+    'extensions.worktreeConfig',
+  ]).catch(() => '');
+  if (enabled !== 'true') {
+    await git(repoRoot, ['config', 'extensions.worktreeConfig', 'true']);
+    console.log('[workspace] enabled extensions.worktreeConfig for per-worktree git config');
+  }
+}
+
 /** Remove a per-issue worktree and its local fix branch. */
 export async function removeAgentWorkspace(issueNumber: number): Promise<void> {
   const cwd = agentWorkspaceForIssue(issueNumber);
@@ -75,6 +88,7 @@ export async function prepareAgentWorkspace(
   const branch = fixBranchForIssue(issueNumber);
 
   await ensureMainCheckout();
+  await ensureWorktreeConfigEnabled();
   await removeAgentWorkspace(issueNumber);
 
   await git(repoRoot, ['fetch', 'origin', 'main']);
