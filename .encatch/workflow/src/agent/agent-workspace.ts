@@ -13,8 +13,20 @@ import { getBotGitIdentity, getGitHubAuthToken } from '../github/auth.js';
 
 const execFileAsync = promisify(execFile);
 
-async function git(cwd: string, args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync('git', args, {
+async function git(
+  cwd: string,
+  args: string[],
+  options?: { config?: Record<string, string> },
+): Promise<string> {
+  const gitArgs: string[] = [];
+  if (options?.config) {
+    for (const [key, value] of Object.entries(options.config)) {
+      gitArgs.push('-c', `${key}=${value}`);
+    }
+  }
+  gitArgs.push(...args);
+
+  const { stdout } = await execFileAsync('git', gitArgs, {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
   });
@@ -68,15 +80,10 @@ export async function prepareAgentWorkspace(
   await git(repoRoot, ['fetch', 'origin', 'main']);
   await git(repoRoot, ['worktree', 'add', '-B', branch, cwd, 'origin/main']);
 
-  const token = await getGitHubAuthToken();
-  const owner = config.githubOwner();
-  const repo = config.githubRepo();
-  const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
-  await git(cwd, ['remote', 'set-url', 'origin', remoteUrl]);
-
   const identity = await getBotGitIdentity();
-  await git(cwd, ['config', 'user.name', identity.name]);
-  await git(cwd, ['config', 'user.email', identity.email]);
+  // --worktree keeps bot identity scoped to this worktree (shared .git/config otherwise).
+  await git(cwd, ['config', '--worktree', 'user.name', identity.name]);
+  await git(cwd, ['config', '--worktree', 'user.email', identity.email]);
 
   console.log(`[workspace] prepared ${cwd} on ${branch}`);
   return { cwd, branch };
@@ -88,9 +95,11 @@ export async function pushFixBranch(cwd: string, branch: string): Promise<void> 
   const owner = config.githubOwner();
   const repo = config.githubRepo();
   const remoteUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
-  await git(cwd, ['remote', 'set-url', 'origin', remoteUrl]);
   await git(cwd, ['rev-parse', 'HEAD']);
-  await git(cwd, ['push', '-u', 'origin', branch]);
+  // -c avoids persisting the app token into the shared origin remote URL.
+  await git(cwd, ['push', '-u', 'origin', branch], {
+    config: { 'remote.origin.url': remoteUrl },
+  });
   console.log(`[workspace] pushed ${branch}`);
 }
 
