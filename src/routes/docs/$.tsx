@@ -15,6 +15,7 @@ import { baseOptions } from '@/lib/layout.shared';
 import { gitConfig } from '@/lib/shared';
 import { useFumadocsLoader } from 'fumadocs-core/source/client';
 import { Suspense } from 'react';
+import { DocsPageFooter } from '@/components/docs-page-footer';
 import { useMDXComponents } from '@/components/mdx';
 
 export const Route = createFileRoute('/docs/$')({
@@ -65,9 +66,10 @@ const clientLoader = browserCollections.docs.createClientLoader({
             githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${path}`}
           />
         </div>
-        <DocsBody>
+        <DocsBody id="docs-content">
           <MDX components={useMDXComponents()} />
         </DocsBody>
+        <DocsPageFooter path={path} />
       </DocsPage>
     );
   },

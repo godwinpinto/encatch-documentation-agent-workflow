@@ -1,6 +1,50 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/geist-mono/wght.css';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --spacing-page: 1436px;
+  --color-brand: hsl(26, 73%, 51%);
+  --color-brand-foreground: white;
+  --color-brand-secondary: #c6bb58;
+  --color-brand-secondary-foreground: #97890c;
+  --color-brand-200: hsl(33, 100%, 50%);
+
+  --color-landing-foreground: #59592a;
+  --color-landing-foreground-200: #a8a866;
+
+  --font-sans:
+    'Geist Variable', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono:
+    'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+.dark {
+  --color-landing-foreground: #e4e2d0;
+  --color-landing-foreground-200: #b7af7e;
+
+  --color-brand: #fff383;
+  --color-brand-secondary: #fc7744;
+  --color-brand-secondary-foreground: #521700;
+  --color-brand-foreground: black;
+  --color-brand-200: #fff7c8;
+}
+
+:root {
+  --headless-color: hsl(250, 80%, 54%);
+  --framework-color: hsl(41, 100%, 40%);
+  --ui-color: hsl(217, 100%, 58%);
+}
+
+#nd-docs-layout,
+#nd-sidebar,
+#nd-sidebar-mobile {
+  --color-fd-primary: var(--color-brand);
+}
 
 html {
   scrollbar-gutter: stable;
@@ -9,4 +53,15 @@ html {
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+body {
+  background-color: var(--color-fd-background);
+  font-family: var(--font-sans);
+}
+
+.dark {
+  --headless-color: hsl(250 100% 80%);
+  --framework-color: #fff383;
+  --ui-color: #a9ceff;
 }

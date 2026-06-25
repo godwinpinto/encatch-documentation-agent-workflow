@@ -20,7 +20,7 @@ function Home() {
           params={{
             _splat: '',
           }}
-          className="px-3 py-2 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium text-sm mx-auto"
+          className="px-3 py-2 rounded-lg bg-brand text-brand-foreground font-medium text-sm mx-auto hover:bg-brand-200 transition-colors"
         >
           Open Docs
         </Link>

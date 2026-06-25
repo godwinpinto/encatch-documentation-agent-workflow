@@ -3,3 +3,4 @@ packages:
   - .encatch/workflow
 allowBuilds:
   esbuild: true
+  sharp: set this to true or false
