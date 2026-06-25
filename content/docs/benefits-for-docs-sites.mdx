@@ -1,0 +1,38 @@
+---
+title: Benefits for Docs Sites
+description: How agentic workflows reduce manual effort on small documentation changes.
+icon: Sparkles
+---
+
+Documentation sites accumulate small fixes — typos, outdated code samples, broken links, missing steps. Each one is quick to fix, but the overhead of triage, branching, and opening a PR often takes longer than the edit itself.
+
+An agentic workflow automates that overhead so maintainers stay focused on larger doc work.
+
+## Less manual triage
+
+When someone reports a docs issue, a human usually has to:
+
+1. Read the report and decide if it is actionable.
+2. Ask for missing details when the report is vague.
+3. Route qualified fixes to the right person.
+
+The workflow in `.encatch/workflow/` handles steps 1–2 automatically. Qualified issues get labeled and handed to a local Cursor agent; unclear reports get a structured comment asking for what is missing.
+
+## Faster small fixes
+
+For qualified issues — typos, wrong snippets, broken links, unambiguous wording — the agent:
+
+1. Creates an isolated branch in a git worktree.
+2. Edits the relevant MDX files under `content/docs/`.
+3. Opens a pull request with a clear summary.
+
+You review the PR instead of doing the edit yourself. Small changes that used to interrupt your day become one-click approvals.
+
+## Keeps docs quality high
+
+Because the cost of fixing minor issues drops, teams are more likely to act on them quickly. Readers see corrected pages sooner, and maintainers spend less time context-switching between writing new content and chasing one-line fixes.
+
+## Where to go next
+
+- [Agentic Workflow](/docs/agentic-workflow) — setup, architecture, and labels
+- [Report an Issue](/docs/report-an-issue) — how to write issues the agent can fix
