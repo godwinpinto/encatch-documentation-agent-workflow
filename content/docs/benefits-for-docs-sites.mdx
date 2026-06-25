@@ -1,0 +1,33 @@
+---
+title: Benefits for Docs Sites
+description: How agentic workflows reduce manual effort on small documentation changes.
+icon: Sparkles
+---
+
+Documentation sites accumulate small fixes — typos, outdated code samples, broken links, and missing steps. Each change is simple on its own, but the manual workflow adds up: triage the report, check out a branch, edit MDX, open a PR, and wait for review.
+
+An agentic workflow handles that repetitive work for you.
+
+## Less manual triage
+
+When someone reports a docs issue, the workflow reads the report and decides whether it has enough detail to fix. Clear before/after text gets qualified automatically; vague reports get a comment asking for the page URL and expected change — no one has to babysit every ticket.
+
+## Faster small fixes
+
+Qualified issues go straight to a local Cursor agent that:
+
+1. Checks out an isolated worktree on a fix branch
+2. Edits only the files under `content/docs/`
+3. Commits with a focused message and opens a pull request
+
+Typos, grammar, wrong ports in code blocks, and broken links are the kind of changes the agent handles without a human opening the repo.
+
+## Keeps reviewers focused
+
+Because the agent makes minimal, scoped diffs, reviewers spend time on substance — not on copying text from an issue into MDX. Structural or product decisions still go to your team; routine corrections ship faster.
+
+## Same pipeline for every report
+
+Whether the issue comes from GitHub or (eventually) Encatch feedback on the site, the same triage and fix flow applies. You maintain one docs app; the workflow keeps it accurate in the background.
+
+See [Agentic Workflow](/docs/agentic-workflow) for setup, or [Report an Issue](/docs/report-an-issue) for how to write issues the agent can act on.
