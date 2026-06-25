@@ -1,0 +1,15 @@
+services:
+  workflow:
+    build:
+      context: ../..
+      dockerfile: .encatch/workflow/Dockerfile
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      PORT: "8787"
+      # Uncomment for private repos — set to https://x-access-token:TOKEN@github.com/owner/repo.git
+      # GIT_REMOTE_URL: ""
+      # SYNC_REPO_ON_START: "true"
+    restart: unless-stopped

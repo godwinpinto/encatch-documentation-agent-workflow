@@ -73,6 +73,7 @@ console.log(`\n${registerUrl.toString()}\n`);
 console.log('2) After creating the app:');
 console.log('   - Generate and download a private key (.pem)');
 console.log(`   - Save it to: ${path.join(workflowDir, 'github-app.private-key.pem')}`);
+console.log('     or set GITHUB_APP_PRIVATE_KEY in .env (inline PEM, \\n for newlines)');
 console.log(`   - Install the app on: ${owner}/${repo}`);
 console.log('3) Add to .encatch/workflow/.env:');
 console.log('   GITHUB_APP_ID=<App ID from GitHub>');

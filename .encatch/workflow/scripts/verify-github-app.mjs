@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAppAuth } from '@octokit/auth-app';
 import { Octokit } from '@octokit/rest';
+import { readGithubAppPrivateKey } from './github-app-private-key.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const workflowDir = path.resolve(scriptDir, '..');
@@ -31,17 +32,12 @@ loadEnvFile();
 const appId = process.env.GITHUB_APP_ID;
 const owner = process.env.GITHUB_OWNER || 'godwinpinto';
 const repo = process.env.GITHUB_REPO || 'encatch-documentation-agent-workflow';
-const inlineKey = process.env.GITHUB_APP_PRIVATE_KEY?.replace(/\\n/g, '\n');
-const keyPath = path.resolve(
-  repoRoot,
-  process.env.GITHUB_APP_PRIVATE_KEY_PATH || '.encatch/workflow/github-app.private-key.pem',
-);
 
 if (!appId) {
   throw new Error('Set GITHUB_APP_ID in .encatch/workflow/.env');
 }
 
-const privateKey = inlineKey || readFileSync(keyPath, 'utf8');
+const privateKey = readGithubAppPrivateKey(repoRoot);
 
 const appOctokit = new Octokit({
   authStrategy: createAppAuth,

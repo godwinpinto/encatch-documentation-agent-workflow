@@ -1,3 +1,4 @@
+import '../cursor-sdk-setup.js';
 import { Agent, CursorAgentError } from '@cursor/sdk';
 import { config } from '../config.js';
 import type { GitHubIssue } from '../github/issues.js';

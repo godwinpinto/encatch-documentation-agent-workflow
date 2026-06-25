@@ -77,3 +77,47 @@ ngrok http 8787
 ```
 
 Register the ngrok URL + `/webhooks/github` in your GitHub repo webhook settings.
+
+## Docker
+
+Build from the **repo root**:
+
+```bash
+docker build -f .encatch/workflow/Dockerfile -t encatch-agentic-workflow .
+docker run -p 8787:8787 --env-file .encatch/workflow/.env encatch-agentic-workflow
+```
+
+Or with Compose (from `.encatch/workflow/`):
+
+```bash
+docker compose up --build
+```
+
+Required env vars: `CURSOR_API_KEY`, `GITHUB_WEBHOOK_SECRET`, and GitHub App vars (or `GITHUB_TOKEN`). For Docker/secrets managers, prefer `GITHUB_APP_PRIVATE_KEY` (inline PEM) over mounting a `.pem` file.
+
+Optional:
+
+| Variable | Purpose |
+| --- | --- |
+| `GIT_REMOTE_URL` | Authenticated `origin` URL for private repo `git fetch` (push already uses the App token) |
+| `SYNC_REPO_ON_START=true` | Pull latest `origin/main` before serving |
+
+Point the GitHub App webhook at `https://<your-host>/webhooks/github`.
+
+### Cursor SDK in Docker (no Cursor CLI required)
+
+This workflow uses `@cursor/sdk` with **`local` agents** — the agent loop runs **inside the Node.js process**. You do **not** need the Cursor IDE or the separate `cursor-agent` CLI installed in the container.
+
+Requirements from the [Cursor TypeScript SDK docs](https://cursor.com/docs/sdk/typescript):
+
+| Requirement | Notes |
+| --- | --- |
+| **Node.js 22.13+** | Base image `node:22-bookworm-slim` |
+| **`CURSOR_API_KEY`** | User or team service-account key |
+| **Bundled SDK binaries** | `@cursor/sdk-linux-x64` / `arm64` ship with the npm package (ripgrep + sandbox helper). Startup auto-sets `CURSOR_RIPGREP_PATH` from the platform package; override only if needed. |
+| **Sandbox off by default** | `local.sandboxOptions.enabled` defaults to `false`, so **bubblewrap is not required** unless you opt in |
+| **No Cursor CLI** | CLI is a separate tool for terminal use; the SDK is self-contained |
+
+If you enable `local.sandboxOptions.enabled: true` on Linux, install `bubblewrap` (`bwrap`) in the image or the SDK will throw a `ConfigurationError`.
+
+Alternative for fully managed runs: switch agents to **`cloud: { repos: [...] }`** so Cursor hosts the VM (different architecture — no local git worktrees).

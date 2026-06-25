@@ -27,9 +27,13 @@ console.log(`Encatch agentic workflow listening on http://localhost:${port}`);
 console.log(`Repo root: ${repoRoot}`);
 console.log(`GitHub auth: ${config.useGithubApp() ? 'GitHub App' : 'PAT'}`);
 if (config.useGithubApp()) {
-  void getBotLogin().then((bot) => {
-    if (bot) console.log(`GitHub bot: ${bot}`);
-  });
+  void getBotLogin()
+    .then((bot) => {
+      if (bot) console.log(`GitHub bot: ${bot}`);
+    })
+    .catch((err) => {
+      console.error('[startup] failed to resolve GitHub bot login:', err);
+    });
 }
 console.log(`GitHub webhook: POST /webhooks/github`);
 

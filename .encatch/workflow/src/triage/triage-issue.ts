@@ -1,3 +1,4 @@
+import '../cursor-sdk-setup.js';
 import { Agent } from '@cursor/sdk';
 import { config, issueTypeLabels, type IssueTypeLabel } from '../config.js';
 import { repoRoot } from '../paths.js';

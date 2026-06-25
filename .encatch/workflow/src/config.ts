@@ -1,6 +1,30 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { repoRoot } from './paths.js';
+
+const DEFAULT_GITHUB_APP_PRIVATE_KEY_PATH = '.encatch/workflow/github-app.private-key.pem';
+
+function resolveGithubAppPrivateKeyPath(): string {
+  const configured = optional('GITHUB_APP_PRIVATE_KEY_PATH', DEFAULT_GITHUB_APP_PRIVATE_KEY_PATH);
+  return path.isAbsolute(configured) ? configured : path.resolve(repoRoot, configured);
+}
+
+/** PEM from GITHUB_APP_PRIVATE_KEY (env) or GITHUB_APP_PRIVATE_KEY_PATH (file). Env takes precedence. */
+export function readGithubAppPrivateKey(): string {
+  const inline = process.env.GITHUB_APP_PRIVATE_KEY?.trim();
+  if (inline) {
+    return inline.replace(/\\n/g, '\n');
+  }
+
+  const keyPath = resolveGithubAppPrivateKeyPath();
+  if (!existsSync(keyPath)) {
+    throw new Error(
+      `GitHub App private key not found at ${keyPath}. Set GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_PATH.`,
+    );
+  }
+
+  return readFileSync(keyPath, 'utf8');
+}
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -24,10 +48,11 @@ function csvList(name: string): string[] {
 function requireGitHubAuthConfig(): void {
   const useApp = Boolean(optional('GITHUB_APP_ID', ''));
   if (useApp) {
-    const keyPath = path.resolve(repoRoot, optional('GITHUB_APP_PRIVATE_KEY_PATH', '.encatch/workflow/github-app.private-key.pem'));
-    if (!process.env.GITHUB_APP_PRIVATE_KEY?.trim() && !existsSync(keyPath)) {
+    const hasInlineKey = Boolean(process.env.GITHUB_APP_PRIVATE_KEY?.trim());
+    const keyPath = resolveGithubAppPrivateKeyPath();
+    if (!hasInlineKey && !existsSync(keyPath)) {
       throw new Error(
-        'GitHub App mode requires GITHUB_APP_PRIVATE_KEY or GITHUB_APP_PRIVATE_KEY_PATH',
+        'GitHub App mode requires GITHUB_APP_PRIVATE_KEY (inline PEM) or an existing GITHUB_APP_PRIVATE_KEY_PATH file',
       );
     }
     return;
@@ -51,7 +76,8 @@ export const config = {
   githubAppId: () => required('GITHUB_APP_ID'),
   githubAppInstallationId: () => optional('GITHUB_APP_INSTALLATION_ID', ''),
   githubAppPrivateKeyPath: () =>
-    optional('GITHUB_APP_PRIVATE_KEY_PATH', '.encatch/workflow/github-app.private-key.pem'),
+    optional('GITHUB_APP_PRIVATE_KEY_PATH', DEFAULT_GITHUB_APP_PRIVATE_KEY_PATH),
+  githubAppPrivateKeyPathResolved: () => resolveGithubAppPrivateKeyPath(),
   githubPat: () => required('GITHUB_TOKEN'),
 
   /** Call once at startup to validate GitHub auth configuration. */

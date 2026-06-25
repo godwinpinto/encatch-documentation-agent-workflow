@@ -1,22 +1,9 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { createAppAuth } from '@octokit/auth-app';
 import { Octokit } from '@octokit/rest';
-import { config } from '../config.js';
-import { repoRoot } from '../paths.js';
+import { config, readGithubAppPrivateKey } from '../config.js';
 
 let octokitPromise: Promise<Octokit> | undefined;
 let installationIdPromise: Promise<number> | undefined;
-
-function readPrivateKey(): string {
-  const inline = process.env.GITHUB_APP_PRIVATE_KEY?.trim();
-  if (inline) {
-    return inline.replace(/\\n/g, '\n');
-  }
-
-  const keyPath = path.resolve(repoRoot, config.githubAppPrivateKeyPath());
-  return readFileSync(keyPath, 'utf8');
-}
 
 async function resolveInstallationId(appOctokit: Octokit): Promise<number> {
   const configured = config.githubAppInstallationId();
@@ -39,7 +26,7 @@ async function getInstallationId(): Promise<number> {
         authStrategy: createAppAuth,
         auth: {
           appId: config.githubAppId(),
-          privateKey: readPrivateKey(),
+          privateKey: readGithubAppPrivateKey(),
         },
       });
       return resolveInstallationId(appOctokit);
@@ -60,7 +47,7 @@ async function createOctokit(): Promise<Octokit> {
     authStrategy: createAppAuth,
     auth: {
       appId: config.githubAppId(),
-      privateKey: readPrivateKey(),
+      privateKey: readGithubAppPrivateKey(),
       installationId,
     },
   });
@@ -81,7 +68,7 @@ export async function getGitHubAuthToken(): Promise<string> {
 
   const auth = createAppAuth({
     appId: config.githubAppId(),
-    privateKey: readPrivateKey(),
+    privateKey: readGithubAppPrivateKey(),
     installationId: await getInstallationId(),
   });
   const { token } = await auth({ type: 'installation' });
@@ -97,7 +84,7 @@ export async function getBotLogin(): Promise<string | undefined> {
     authStrategy: createAppAuth,
     auth: {
       appId: config.githubAppId(),
-      privateKey: readPrivateKey(),
+      privateKey: readGithubAppPrivateKey(),
     },
   });
   const { data } = await appOctokit.rest.apps.getAuthenticated();
@@ -122,7 +109,7 @@ export async function getBotGitIdentity(): Promise<{ name: string; email: string
         authStrategy: createAppAuth,
         auth: {
           appId: config.githubAppId(),
-          privateKey: readPrivateKey(),
+          privateKey: readGithubAppPrivateKey(),
         },
       });
       const { data } = await appOctokit.rest.apps.getAuthenticated();
